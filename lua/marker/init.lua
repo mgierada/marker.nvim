@@ -9,6 +9,9 @@ local M = {}
 --- @field file string  -- The file associated with the mark (empty if none)
 --- @field bufnum number   -- The buffer number of the mark
 
+local PREVIEW_WINDOW_TITLE_COPY = "Mark Preview:"
+local WINDOW_TITLE_COPY = "Global Marks"
+
 --- Retrieve marks and filter only alphabetic ones (A-Z).
 --- @return Mark[] List of marks with only alphabetic names
 local get_marks = function()
@@ -76,33 +79,46 @@ local function preview_mark(mark)
 		return
 	end
 
-	-- Open the file in a hidden buffer to get its content
-	--- @type number
-	local buf = vim.fn.bufadd(mark.file)
-	vim.fn.bufload(buf)
+	-- Determine the buffer to load content from
+	local buf
 
-	-- Get the specific line to preview
-	--- @type string|nil
-	local line_content = vim.api.nvim_buf_get_lines(buf, mark.lnum - 1, mark.lnum, false)[1]
-	line_content = line_content or "[Empty Line]"
+	local current_buf_name = vim.fn.bufname()
+	local file_exists = mark.file
+	vim.notify("Current buffer: " .. current_buf_name, vim.log.levels.INFO)
+	vim.notify("Mark file: " .. mark.file, vim.log.levels.INFO)
+
+	if vim.fn.bufname() == mark.file then
+		-- Use the current buffer if it's the same as the mark's file
+		vim.notify("Previewing mark in current buffer", vim.log.levels.INFO)
+		buf = vim.api.nvim_get_current_buf()
+	else
+		-- Otherwise, add and load the file in a hidden buffer
+		vim.notify("Previewing mark in hidden buffer", vim.log.levels.INFO)
+		buf = vim.fn.bufadd(mark.file)
+		vim.fn.bufload(buf)
+	end
+
+	-- Lines to load for the preview
+	local PREVIEW_LINES = 15
+	local start_line_to_load = math.max(0, mark.lnum - 1) -- Ensure valid line number
+	local end_line_to_load = start_line_to_load + PREVIEW_LINES
+
+	-- Get the specific lines to preview
+	local lines = vim.api.nvim_buf_get_lines(buf, start_line_to_load, end_line_to_load, false)
+	if not lines or vim.tbl_isempty(lines) then
+		vim.notify("No content found in preview", vim.log.levels.INFO)
+		return
+	end
 
 	-- Determine window dimensions
-	--- @type number
-	local win_width = math.min(80, vim.api.nvim_get_option("columns") - 4)
-	--- @type number
-	local win_height = 3
-
-	-- Calculate center position
-	--- @type number
+	local win_width = math.min(80, vim.o.columns - 4)
+	local win_height = math.min(#lines + 2, 30) -- Height based on content, max 30
 	local screen_width = vim.o.columns
-	--- @type number
 	local screen_height = vim.o.lines
-	--- @type number
 	local win_row = math.floor((screen_height - win_height) / 2)
-	--- @type number
 	local win_col = math.floor((screen_width - win_width) / 2)
 
-	--- @type table<string, any>
+	-- Floating window options
 	local opts = {
 		relative = "editor",
 		width = win_width,
@@ -114,12 +130,10 @@ local function preview_mark(mark)
 	}
 
 	-- Create a new buffer for the preview
-	--- @type number
 	local preview_buf = vim.api.nvim_create_buf(false, true)
-	vim.api.nvim_buf_set_lines(preview_buf, 0, -1, false, { "Preview:", line_content })
+	vim.api.nvim_buf_set_lines(preview_buf, 0, -1, false, vim.list_extend({ PREVIEW_WINDOW_TITLE_COPY }, lines))
 
 	-- Open the floating window with the preview buffer
-	--- @type number
 	local win_id = vim.api.nvim_open_win(preview_buf, false, opts)
 
 	-- Automatically close the floating window when navigating away
@@ -139,7 +153,7 @@ M.open_marks_menu = function(opts)
 
 	local menu = Menu:new({
 		position = opts.position,
-		open_win_override = { title = "Global Marks" },
+		open_win_override = { title = WINDOW_TITLE_COPY },
 	})
 
 	menu:add_new_buffer_callback(function(m)
