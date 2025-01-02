@@ -79,22 +79,19 @@ local function preview_mark(mark)
 		return
 	end
 
+	-- Resolve the file path
+	local resolved_file = vim.fn.expand(mark.file) -- Expand `~` to full path
+	resolved_file = vim.fn.fnamemodify(resolved_file, ":p") -- Convert to absolute path
+	vim.notify(resolved_file, vim.log.levels.INFO)
+
 	-- Determine the buffer to load content from
 	local buf
-
-	local current_buf_name = vim.fn.bufname()
-	local file_exists = mark.file
-	vim.notify("Current buffer: " .. current_buf_name, vim.log.levels.INFO)
-	vim.notify("Mark file: " .. mark.file, vim.log.levels.INFO)
-
-	if vim.fn.bufname() == mark.file then
+	if vim.fn.bufname() == resolved_file then
 		-- Use the current buffer if it's the same as the mark's file
-		vim.notify("Previewing mark in current buffer", vim.log.levels.INFO)
 		buf = vim.api.nvim_get_current_buf()
 	else
 		-- Otherwise, add and load the file in a hidden buffer
-		vim.notify("Previewing mark in hidden buffer", vim.log.levels.INFO)
-		buf = vim.fn.bufadd(mark.file)
+		buf = vim.fn.bufadd(resolved_file)
 		vim.fn.bufload(buf)
 	end
 
@@ -132,6 +129,12 @@ local function preview_mark(mark)
 	-- Create a new buffer for the preview
 	local preview_buf = vim.api.nvim_create_buf(false, true)
 	vim.api.nvim_buf_set_lines(preview_buf, 0, -1, false, vim.list_extend({ PREVIEW_WINDOW_TITLE_COPY }, lines))
+
+	-- Highlight the marked line in the preview buffer
+	local highlight_line = mark.lnum - start_line_to_load -- Adjust for the preview starting line
+	if highlight_line > 0 and highlight_line <= #lines then
+		vim.api.nvim_buf_add_highlight(preview_buf, -1, "Visual", highlight_line, 0, -1)
+	end
 
 	-- Open the floating window with the preview buffer
 	local win_id = vim.api.nvim_open_win(preview_buf, false, opts)
