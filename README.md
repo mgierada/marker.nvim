@@ -26,7 +26,7 @@
 
 ## Overview
 
-> ![WARNING]
+> [!WARNING]  
 > This plugin is still in early alpha version. Expect breaking changes 💥
 
 ## ⚡️Requirements
