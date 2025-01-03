@@ -26,8 +26,7 @@
 
 ## Overview
 
-![WARNING]
-
+> ![WARNING]
 > This plugin is still in early alpha version. Expect breaking changes 💥
 
 ## ⚡️Requirements
@@ -72,4 +71,10 @@ The plugin is inspired by other awesome plugins and borrows some concepts:
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=mgierada/marker.nvim&type=Timeline)](https://star-history.com/#mgierada/marker.nvim&Timeline)
+<a href="https://star-history.com/#mgierada/marker.nvim&Timeline">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=mgierada/marker.nvim&type=Timeline&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=mgierada/marker.nvim&type=Timeline" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=mgierada/marker.nvim&type=Timeline" />
+ </picture>
+</a>
