@@ -1,5 +1,3 @@
-# marker.nvim
-
 <div align="center">
 
 # marker.nvim
